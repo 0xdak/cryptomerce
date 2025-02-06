@@ -10,6 +10,9 @@ contract CryptomerceTest is Test {
     DeployCryptomerce deployCryptomerce;
     address public s_owner;
     address nonOwner;
+    address public USER = makeAddr("USER");
+    address public USER2 = makeAddr("USER2");
+    uint256 constant INITIAL_BALANCE = 1000;
 
     //sets owner and a non owner for tests
     function setUp() public {
@@ -17,6 +20,9 @@ contract CryptomerceTest is Test {
         cryptomerce = deployCryptomerce.run();
         s_owner = cryptomerce.getContractOwner();
         nonOwner = address(0x123);
+
+        vm.deal(USER, INITIAL_BALANCE);
+        vm.deal(USER2, INITIAL_BALANCE);
 
         console.log("DeployCryptomerce address: ", address(deployCryptomerce));
         console.log("Cryptomerce address: ", address(cryptomerce));
@@ -109,4 +115,28 @@ contract CryptomerceTest is Test {
         vm.expectRevert();
         cryptomerce.getAllProducts();
     }
+
+    // test buy product
+    // first append two products, buyProduct,
+    // 1. check if the product is bought (is owner set)
+    // 2. buyer's balance decreases, seller's balance increases
+    function testBuyProduct() public {
+        uint256 previosBalanceOfUser = address(USER).balance;
+        uint256 previosBalanceOfUser2 = address(USER2).balance;
+        vm.prank(USER);
+        cryptomerce.addProduct("Product 1", 100);
+        address previousOwner = cryptomerce.s_productIdToOwner(0);
+        assertEq(previousOwner, USER);
+
+        vm.prank(USER2);
+        cryptomerce.buyProduct{value: 100}(0);
+        address newOwner = cryptomerce.s_productIdToOwner(0);
+        assertEq(newOwner, USER2);
+
+        assertEq(address(USER).balance, previosBalanceOfUser + 100);
+        assertEq(address(USER2).balance, previosBalanceOfUser2 - 100);
+    }
+
+    // testBuyProduct() + if extra money is sent, it should be returned
+    function testBuyProductWithSendingExtraMoney() public {}
 }

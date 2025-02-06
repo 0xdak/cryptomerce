@@ -33,10 +33,13 @@ contract Cryptomerce {
         _;
     }
 
+    // add product to s_products
     function addProduct(string memory name, uint256 price) public {
+        s_productIdToOwner[s_products.length] = msg.sender;
         s_products.push(Product(s_products.length, name, price, true));
     }
 
+    // buy product with product id
     function buyProduct(uint256 productId) public payable {
         Product memory product = s_products[productId];
         require(product.isActive, "Product not found.");
@@ -44,7 +47,7 @@ contract Cryptomerce {
             msg.value >= product.price,
             Cryptomerce__InsufficientValueSent(msg.value, product.price)
         );
-        payable(s_productIdToOwner[productId]).transfer(msg.value);
+        payable(s_productIdToOwner[productId]).transfer(product.price);
         s_productIdToOwner[productId] = msg.sender;
     }
 
