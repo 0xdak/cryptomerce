@@ -33,10 +33,6 @@ contract Cryptomerce {
         _;
     }
 
-    function getContractOwner() public view returns (address) {
-        return i_owner;
-    }
-
     function addProduct(string memory name, uint256 price) public {
         s_products.push(Product(s_products.length, name, price, true));
     }
@@ -74,5 +70,9 @@ contract Cryptomerce {
 
     function getAllProducts() public view onlyOwner returns (Product[] memory) {
         return s_products;
+    }
+
+    function getContractOwner() public view returns (address) {
+        return i_owner;
     }
 }
