@@ -33,10 +33,9 @@ contract Cryptomerce {
         _;
     }
 
-    function getContractOwner() public view returns (address)
-  {
-    return i_owner;
-  }
+    function getContractOwner() public view returns (address) {
+        return i_owner;
+    }
 
     function addProduct(string memory name, uint256 price) public {
         s_products.push(Product(s_products.length, name, price, true));
@@ -44,7 +43,7 @@ contract Cryptomerce {
 
     function buyProduct(uint256 productId) public payable {
         Product memory product = s_products[productId];
-        require(product.isActive,"Product not found.");
+        require(product.isActive, "Product not found.");
         require(
             msg.value >= product.price,
             Cryptomerce__InsufficientValueSent(msg.value, product.price)
@@ -53,28 +52,27 @@ contract Cryptomerce {
         s_productIdToOwner[productId] = msg.sender;
     }
 
-    
-    function disableProduct(uint256 id) public onlyOwner{
-    require(id < s_products.length, "Invalid product ID.");
-    require(s_products[id].isActive,"Product is already disabled.");
-    s_products[id].isActive = false;
+    function disableProduct(uint256 id) public onlyOwner {
+        require(id < s_products.length, "Invalid product ID.");
+        require(s_products[id].isActive, "Product is already disabled.");
+        s_products[id].isActive = false;
     }
 
-function getActiveProducts() public view returns (Product[] memory) {
-    Product[] memory activeProducts = new Product[](s_products.length);
-    uint256 index = 0;
+    function getActiveProducts() public view returns (Product[] memory) {
+        Product[] memory activeProducts = new Product[](s_products.length);
+        uint256 index = 0;
 
-    for (uint256 i = 0; i < s_products.length; i++) {
-        if (s_products[i].isActive) {
-            activeProducts[index] = s_products[i];
-            index++; // Keeps active products in order
+        for (uint256 i = 0; i < s_products.length; i++) {
+            if (s_products[i].isActive) {
+                activeProducts[index] = s_products[i];
+                index++; // Keeps active products in order
+            }
         }
+
+        return activeProducts;
     }
 
-    return activeProducts;
-}
-
-function getAllProducts() public onlyOwner view returns (Product[] memory) {
-    return s_products;
-}
+    function getAllProducts() public view onlyOwner returns (Product[] memory) {
+        return s_products;
+    }
 }
