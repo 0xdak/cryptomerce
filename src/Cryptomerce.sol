@@ -11,6 +11,8 @@ contract Cryptomerce {
         uint256 sentValue,
         uint256 requiredValue
     );
+    error Cryptomerce__ProductNotFound();
+    error Cryptomerce__NotTheProductOwner();
 
     // @TODO change struct to Event ?
     struct Product {
@@ -21,7 +23,7 @@ contract Cryptomerce {
     }
 
     address private immutable i_owner;
-    Product[] public s_products;
+    Product[] private s_products;
     mapping(uint256 => address) public s_productIdToOwner;
 
     constructor() {
@@ -42,7 +44,7 @@ contract Cryptomerce {
     // buy product with product id
     function buyProduct(uint256 productId) public payable {
         Product memory product = s_products[productId];
-        require(product.isActive, "Product not found.");
+        require(product.isActive, Cryptomerce__ProductNotFound());
         require(
             msg.value >= product.price,
             Cryptomerce__InsufficientValueSent(msg.value, product.price)
@@ -51,9 +53,12 @@ contract Cryptomerce {
         s_productIdToOwner[productId] = msg.sender;
     }
 
-    function disableProduct(uint256 id) public onlyOwner {
-        require(id < s_products.length, "Invalid product ID.");
-        require(s_products[id].isActive, "Product is already disabled.");
+    function disableProduct(uint256 id) public {
+        require(
+            msg.sender == s_productIdToOwner[id],
+            Cryptomerce__NotTheProductOwner()
+        );
+        require(id < s_products.length, Cryptomerce__ProductNotFound());
         s_products[id].isActive = false;
     }
 
@@ -73,6 +78,14 @@ contract Cryptomerce {
 
     function getAllProducts() public view onlyOwner returns (Product[] memory) {
         return s_products;
+    }
+
+    function getProduct(uint256 index) public view returns (Product memory) {
+        require(
+            s_products[index].isActive == true,
+            Cryptomerce__ProductNotFound()
+        );
+        return s_products[index];
     }
 
     function getContractOwner() public view returns (address) {

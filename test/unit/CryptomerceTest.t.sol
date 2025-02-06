@@ -39,34 +39,22 @@ contract CryptomerceTest is Test {
     // test product adding is working correctly
     function testAddProduct() public {
         cryptomerce.addProduct("Product 1", 100);
-        (
-            uint256 id,
-            string memory name,
-            uint256 price,
-            bool isActive
-        ) = cryptomerce.s_products(0);
-        assertEq(id, 0);
-        assertEq(name, "Product 1");
-        assertEq(price, 100);
-        assertEq(isActive, true);
+        Cryptomerce.Product memory product = cryptomerce.getProduct(0);
+        assertEq(product.id, 0);
+        assertEq(product.name, "Product 1");
+        assertEq(product.price, 100);
+        assertEq(product.isActive, true);
     }
 
     //Tests 'disableProduct' as owner
     function testDisableProduct() public {
         console.log("testDisableProduct Caller: ", msg.sender);
+        vm.startPrank(USER);
         cryptomerce.addProduct("Product 1", 100);
-        vm.prank(s_owner);
         cryptomerce.disableProduct(0);
-        (
-            uint256 id,
-            string memory name,
-            uint256 price,
-            bool isActive
-        ) = cryptomerce.s_products(0);
-        assertEq(id, 0);
-        assertEq(name, "Product 1");
-        assertEq(price, 100);
-        assertEq(isActive, false);
+        vm.stopPrank();
+        vm.expectRevert(Cryptomerce.Cryptomerce__ProductNotFound.selector);
+        Cryptomerce.Product memory product = cryptomerce.getProduct(0);
     }
 
     //Tests 'onlyOwner' modifier and expects 'revert' error
@@ -82,7 +70,6 @@ contract CryptomerceTest is Test {
         cryptomerce.addProduct("Product 2", 200);
         cryptomerce.addProduct("Product 3", 300);
 
-        vm.prank(s_owner);
         cryptomerce.disableProduct(0);
         Cryptomerce.Product[] memory activeProducts = cryptomerce
             .getActiveProducts();
@@ -101,6 +88,7 @@ contract CryptomerceTest is Test {
         vm.startPrank(s_owner);
         cryptomerce.disableProduct(1);
         Cryptomerce.Product[] memory allProducts = cryptomerce.getAllProducts();
+        vm.stopPrank();
 
         assertEq(allProducts.length, 3);
 
