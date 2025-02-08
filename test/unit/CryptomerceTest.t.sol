@@ -71,8 +71,7 @@ contract CryptomerceTest is Test {
         cryptomerce.addProduct("Product 3", 300);
 
         cryptomerce.disableProduct(0);
-        Cryptomerce.Product[] memory activeProducts = cryptomerce
-            .getActiveProducts();
+        Cryptomerce.Product[] memory activeProducts = cryptomerce.getActiveProducts();
         // TODO: test array size
 
         assertEq(activeProducts[0].name, "Product 2");

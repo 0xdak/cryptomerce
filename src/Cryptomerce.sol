@@ -7,10 +7,7 @@ pragma solidity ^0.8.0;
 contract Cryptomerce {
     // Errors
     error Cryptomerce__NotTheContractOwner();
-    error Cryptomerce__InsufficientValueSent(
-        uint256 sentValue,
-        uint256 requiredValue
-    );
+    error Cryptomerce__InsufficientValueSent(uint256 sentValue, uint256 requiredValue);
     error Cryptomerce__ProductNotFound();
     error Cryptomerce__NotTheProductOwner();
 
@@ -45,19 +42,13 @@ contract Cryptomerce {
     function buyProduct(uint256 productId) public payable {
         Product memory product = s_products[productId];
         require(product.isActive, Cryptomerce__ProductNotFound());
-        require(
-            msg.value >= product.price,
-            Cryptomerce__InsufficientValueSent(msg.value, product.price)
-        );
+        require(msg.value >= product.price, Cryptomerce__InsufficientValueSent(msg.value, product.price));
         payable(s_productIdToOwner[productId]).transfer(product.price);
         s_productIdToOwner[productId] = msg.sender;
     }
 
     function disableProduct(uint256 id) public {
-        require(
-            msg.sender == s_productIdToOwner[id],
-            Cryptomerce__NotTheProductOwner()
-        );
+        require(msg.sender == s_productIdToOwner[id], Cryptomerce__NotTheProductOwner());
         require(id < s_products.length, Cryptomerce__ProductNotFound());
         s_products[id].isActive = false;
     }
@@ -81,10 +72,7 @@ contract Cryptomerce {
     }
 
     function getProduct(uint256 index) public view returns (Product memory) {
-        require(
-            s_products[index].isActive == true,
-            Cryptomerce__ProductNotFound()
-        );
+        require(s_products[index].isActive == true, Cryptomerce__ProductNotFound());
         return s_products[index];
     }
 
