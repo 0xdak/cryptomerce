@@ -6,6 +6,7 @@
 ### TODOs For Development
 
 - [ ] Maybe you want to set the prices in dollars, ETH may +- fastly (Use Dollars for e-commerce in frontend, but eth in backend (oracle))
+    - [ ] OR implement a Stablecoin that is pegged to USD or any other exchange (e.g. DAI, USDC)
 - [ ] Implement swap products
 
 ### TODOs for Testing
