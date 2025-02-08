@@ -85,6 +85,7 @@ contract CryptomerceTest is Test {
         cryptomerce.addProduct("Product 3", 300);
 
         cryptomerce.disableProduct(1);
+        vm.prank(s_owner);
         Cryptomerce.Product[] memory allProducts = cryptomerce.getAllProducts();
 
         assertEq(allProducts.length, 3);

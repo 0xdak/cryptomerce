@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptomerce Products</title>
+</head>
+<body>
+    <h1>Active Products</h1>
+    <button onclick="loadActiveProducts()">Load Active Products</button>
+    <ul id="productList"></ul>
+
+    <h2>Add New Product</h2>
+    <form id="addProductForm">
+        <label for="productName">Product Name:</label>
+        <input type="text" id="productName" name="productName" required>
+        <label for="productPrice">Product Price (ETH):</label>
+        <input type="number" id="productPrice" name="productPrice" required>
+        <button type="submit">Add Product</button>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
