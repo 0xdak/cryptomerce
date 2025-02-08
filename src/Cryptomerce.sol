@@ -32,7 +32,7 @@ contract Cryptomerce {
         _;
     }
 
-    // add product to s_products
+    /// @notice Adds product to the products storage
     function addProduct(string memory name, uint256 price) public {
         s_productIdToOwner[s_products.length] = msg.sender;
         s_products.push(Product(s_products.length, name, price, true));
@@ -47,13 +47,15 @@ contract Cryptomerce {
         s_productIdToOwner[productId] = msg.sender;
     }
 
+    /// @notice Disable visibility of the product by id
     function disableProduct(uint256 id) public {
         require(msg.sender == s_productIdToOwner[id], Cryptomerce__NotTheProductOwner());
         require(id < s_products.length, Cryptomerce__ProductNotFound());
         s_products[id].isActive = false;
     }
 
-    function getActiveProducts() public view returns (Product[] memory) {
+    /// @notice get active products, it means only visible products
+    function getActiveProducts() external view returns (Product[] memory) {
         Product[] memory activeProducts = new Product[](s_products.length);
         uint256 index = 0;
 
@@ -67,15 +69,18 @@ contract Cryptomerce {
         return activeProducts;
     }
 
-    function getAllProducts() public view onlyOwner returns (Product[] memory) {
-        return s_products;
-    }
-
+    /// @notice Get product by index, if product is not active, it will throw an error
     function getProduct(uint256 index) public view returns (Product memory) {
         require(s_products[index].isActive == true, Cryptomerce__ProductNotFound());
         return s_products[index];
     }
 
+    /// @notice Get all products for only owner
+    function getAllProducts() public view onlyOwner returns (Product[] memory) {
+        return s_products;
+    }
+
+    /// @notice Get contract owner
     function getContractOwner() public view returns (address) {
         return i_owner;
     }
