@@ -76,6 +76,7 @@ contract Cryptomerce {
         require(product.isActive, Cryptomerce__ProductNotFound());
         require(msg.value >= product.price, Cryptomerce__InsufficientValueSent(msg.value, product.price));
         payable(s_productIdToOwner[productId]).transfer(product.price);
+        payable(msg.sender).transfer(msg.value - product.price);
         s_productIdToOwner[productId] = msg.sender;
     }
 
@@ -122,6 +123,7 @@ contract Cryptomerce {
                 s_products[swapRequest.offeredProductId].price - s_products[swapRequest.requestedProductId].price;
             require(msg.value >= priceDifference, Cryptomerce__NotEnoughValueSent(msg.value, uint256(priceDifference)));
             payable(offerer).transfer(priceDifference);
+            payable(msg.sender).transfer(msg.value - priceDifference);
         } else if (s_products[swapRequest.offeredProductId].price < s_products[swapRequest.requestedProductId].price) {
             // you will want to get the price difference from offerer, so swap isn't completed yet
             s_swapOffererToSwapRequests[offerer][swapId].status = SwapStatus.Confirmed;
@@ -154,6 +156,7 @@ contract Cryptomerce {
         require(msg.value >= priceDifference, Cryptomerce__NotEnoughValueSent(msg.value, priceDifference));
         (bool success,) = payable(ownerOfRequestedProduct).call{value: priceDifference}("");
         require(success, Cryptomerce__TransferFailed());
+        payable(msg.sender).transfer(msg.value - priceDifference);
         s_productIdToOwner[swapRequest.requestedProductId] = msg.sender;
         s_productIdToOwner[swapRequest.offeredProductId] = ownerOfRequestedProduct;
         emit SwapCompleted(swapId, swapRequest.offeredProductId, swapRequest.requestedProductId, msg.sender);

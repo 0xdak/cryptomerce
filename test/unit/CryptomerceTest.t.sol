@@ -229,7 +229,7 @@ contract CryptomerceTest is Test {
 
         Cryptomerce.SwapRequest memory swapRequest;
         vm.prank(USER);
-        cryptomerce.addProduct("Product 1", 100);
+        cryptomerce.addProduct("Product 1", 105);
         vm.prank(USER2);
         cryptomerce.addProduct("Product 2", 200);
 
@@ -243,7 +243,7 @@ contract CryptomerceTest is Test {
         cryptomerce.completeSwapWithPayingThePriceDifference{value: 100}(swapId);
         assertEq(cryptomerce.s_productIdToOwner(0), USER2);
         assertEq(cryptomerce.s_productIdToOwner(1), USER);
-        assertEq(address(USER2).balance, previousOwnerOfRequestedProductBalance + 100);
-        assertEq(address(USER).balance, previousOffererBalance - 100);
+        assertEq(address(USER2).balance, previousOwnerOfRequestedProductBalance + 95);
+        assertEq(address(USER).balance, previousOffererBalance - 95);
     }
 }
