@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Test, console} from "forge-std/Test.sol";
+
 /// @title Cryptomerce
 /// @author yuznumara
 /// @notice Just an entrance for Cryptomerce project to complete buy/sell and swap transactions
@@ -40,7 +42,7 @@ contract Cryptomerce {
     mapping(uint256 => address) public s_productIdToOwner;
     mapping(address swapOfferer => mapping(uint256 swapId => SwapRequest swapRequest)) private
         s_swapOffererToSwapRequests;
-    uint256 private swapsCounter;
+    uint256 private swapsCounter = 1;
 
     /* Events */
     event SwapRequested(
@@ -94,12 +96,15 @@ contract Cryptomerce {
         public
         returns (uint256 swapId)
     {
+        swapId = swapsCounter;
+        require(s_productIdToOwner[offeredProduct] == msg.sender, Cryptomerce__NotTheProductOwner());
+        require(requestedProduct != offeredProduct);
         require(s_products[offeredProduct].isActive, Cryptomerce__ProductNotFound());
         require(s_products[requestedProduct].isActive, Cryptomerce__ProductNotFound());
         // mapping(address swapOfferer => mapping(uint256 swapId => SwapRequest swapRequest)) private s_swapOffererToSwapRequests;
-        s_swapOffererToSwapRequests[msg.sender][swapsCounter] =
+        s_swapOffererToSwapRequests[msg.sender][swapId] =
             SwapRequest(offeredProduct, requestedProduct, SwapStatus.Requested);
-        emit SwapRequested(swapsCounter, offeredProduct, requestedProduct, msg.sender);
+        emit SwapRequested(swapId, offeredProduct, requestedProduct, msg.sender);
         swapsCounter++;
         return swapId;
     }
@@ -109,25 +114,24 @@ contract Cryptomerce {
     /// @notice If the price difference is negative, there will be a 3rd step to complete the swap
     // Requested -> Confirmed by owner of the requeested product
     function completeSwapForSingleProduct(uint256 swapId, address offerer) public payable {
-        uint256 priceDifference;
         SwapRequest memory swapRequest = s_swapOffererToSwapRequests[offerer][swapId];
-        priceDifference =
-            s_products[swapRequest.offeredProductId].price - s_products[swapRequest.requestedProductId].price;
         require(swapRequest.status == SwapStatus.Requested, Cryptomerce__SwapRequestIsConfirmedOrCompletedAlready());
         require(msg.sender == s_productIdToOwner[swapRequest.requestedProductId], Cryptomerce__NotTheProductOwner());
-        if (priceDifference > 0) {
-            require(msg.value >= priceDifference, Cryptomerce__NotEnoughValueSent(msg.value, priceDifference));
+        if (s_products[swapRequest.offeredProductId].price > s_products[swapRequest.requestedProductId].price) {
+            uint256 priceDifference =
+                s_products[swapRequest.offeredProductId].price - s_products[swapRequest.requestedProductId].price;
+            require(msg.value >= priceDifference, Cryptomerce__NotEnoughValueSent(msg.value, uint256(priceDifference)));
             payable(offerer).transfer(priceDifference);
-        } else if (priceDifference < 0) {
+        } else if (s_products[swapRequest.offeredProductId].price < s_products[swapRequest.requestedProductId].price) {
             // you will want to get the price difference from offerer, so swap isn't completed yet
             s_swapOffererToSwapRequests[offerer][swapId].status = SwapStatus.Confirmed;
+            return;
         }
 
         s_productIdToOwner[swapRequest.requestedProductId] = offerer;
         s_productIdToOwner[swapRequest.offeredProductId] = msg.sender;
 
         emit SwapCompleted(swapId, swapRequest.offeredProductId, swapRequest.requestedProductId, msg.sender);
-
         // Delete the swap request after confirmation
         delete s_swapOffererToSwapRequests[offerer][swapId];
     }
@@ -137,14 +141,16 @@ contract Cryptomerce {
     /// @dev Confirmed -> Complete by Offerer
     /// @param swapId The ID of the swap request
     function completeSwapWithPayingThePriceDifference(uint256 swapId) public payable {
-        uint256 priceDifference;
         SwapRequest memory swapRequest = s_swapOffererToSwapRequests[msg.sender][swapId];
         address ownerOfRequestedProduct = s_productIdToOwner[swapRequest.requestedProductId];
-        priceDifference =
-            s_products[swapRequest.offeredProductId].price - s_products[swapRequest.requestedProductId].price;
+        require(
+            s_products[swapRequest.requestedProductId].price > s_products[swapRequest.offeredProductId].price,
+            "Requested product's price must be greater than offered product's price"
+        );
+        uint256 priceDifference =
+            s_products[swapRequest.requestedProductId].price - s_products[swapRequest.offeredProductId].price;
         require(swapRequest.status == SwapStatus.Confirmed, Cryptomerce__SwapRequestIsNotConfirmedYet());
         require(msg.sender == s_productIdToOwner[swapRequest.offeredProductId], Cryptomerce__NotTheProductOwner());
-        require(priceDifference > 0, "Price difference must be positive");
         require(msg.value >= priceDifference, Cryptomerce__NotEnoughValueSent(msg.value, priceDifference));
         (bool success,) = payable(ownerOfRequestedProduct).call{value: priceDifference}("");
         require(success, Cryptomerce__TransferFailed());

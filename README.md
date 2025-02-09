@@ -9,6 +9,10 @@
     - [ ] OR implement a Stablecoin that is pegged to USD or any other exchange (e.g. DAI, USDC)
 - [ ] Implement swap products
 
+### TODOs For Bugs
+- [ ] In transactions, no extra money is sent to the sender
+
+
 ### TODOs for Testing
 - [X] Test buyProduct
-- [ ] Test swap functionalities
+- [X] Test swap functionalities

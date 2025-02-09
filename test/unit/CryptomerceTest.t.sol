@@ -175,15 +175,15 @@ contract CryptomerceTest is Test {
         //@TODO test emit SwapCompleted
     }
 
-    function testCompleteSwapForSingleProductIfPriceDifferentIsPositive() public {
+    function testCompleteSwapForSingleProductIfPriceDifferenceIsPositive() public {
         uint256 swapId;
         Cryptomerce.SwapRequest memory swapRequest;
         uint256 previousOffererBalance = USER.balance;
         uint256 previousOwnerOfRequestedProductBalance = USER2.balance;
+        vm.prank(USER);
         cryptomerce.addProduct("Product 1", 200);
-        vm.startPrank(USER2);
+        vm.prank(USER2);
         cryptomerce.addProduct("Product 2", 100);
-        vm.stopPrank();
 
         vm.prank(USER);
         swapId = cryptomerce.requestSwapForSingleProduct(0, 1);
@@ -197,5 +197,53 @@ contract CryptomerceTest is Test {
         assertEq(address(USER).balance, previousOffererBalance + 100);
 
         //@TODO test emit SwapCompleted
+    }
+
+    function testCompleteSwapForSingleProductIfPriceDifferenceIsNegative() public {
+        uint256 swapId;
+        Cryptomerce.SwapRequest memory swapRequest;
+        vm.prank(USER);
+        cryptomerce.addProduct("Product 1", 100);
+        vm.prank(USER2);
+        cryptomerce.addProduct("Product 2", 200);
+
+        vm.prank(USER);
+        swapId = cryptomerce.requestSwapForSingleProduct(0, 1);
+        vm.prank(USER2);
+        cryptomerce.completeSwapForSingleProduct(swapId, USER);
+        swapRequest = cryptomerce.getSwapRequestById(swapId, USER);
+
+        // ownerships should be still same
+        assertEq(cryptomerce.s_productIdToOwner(0), USER);
+        assertEq(cryptomerce.s_productIdToOwner(1), USER2);
+        assertEq(
+            uint256(cryptomerce.getSwapRequestById(swapId, USER).status), uint256(Cryptomerce.SwapStatus.Confirmed)
+        );
+    }
+
+    // price difference is negative
+    function testCompleteSwapWithPayingThePriceDifference() public {
+        uint256 swapId;
+        uint256 previousOffererBalance = USER.balance;
+        uint256 previousOwnerOfRequestedProductBalance = USER2.balance;
+
+        Cryptomerce.SwapRequest memory swapRequest;
+        vm.prank(USER);
+        cryptomerce.addProduct("Product 1", 100);
+        vm.prank(USER2);
+        cryptomerce.addProduct("Product 2", 200);
+
+        vm.prank(USER);
+        swapId = cryptomerce.requestSwapForSingleProduct(0, 1);
+        vm.prank(USER2);
+        cryptomerce.completeSwapForSingleProduct(swapId, USER);
+        swapRequest = cryptomerce.getSwapRequestById(swapId, USER);
+
+        vm.prank(USER);
+        cryptomerce.completeSwapWithPayingThePriceDifference{value: 100}(swapId);
+        assertEq(cryptomerce.s_productIdToOwner(0), USER2);
+        assertEq(cryptomerce.s_productIdToOwner(1), USER);
+        assertEq(address(USER2).balance, previousOwnerOfRequestedProductBalance + 100);
+        assertEq(address(USER).balance, previousOffererBalance - 100);
     }
 }
