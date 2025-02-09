@@ -108,7 +108,7 @@ contract Cryptomerce {
     /// @notice If the price difference is positive, the difference will be transferred to the product owner
     /// @notice If the price difference is negative, there will be a 3rd step to complete the swap
     // Requested -> Confirmed by owner of the requeested product
-    function completeSwapForSingleProduct(uint256 swapId, address offerer) public {
+    function completeSwapForSingleProduct(uint256 swapId, address offerer) public payable {
         uint256 priceDifference;
         SwapRequest memory swapRequest = s_swapOffererToSwapRequests[offerer][swapId];
         priceDifference =
@@ -116,6 +116,7 @@ contract Cryptomerce {
         require(swapRequest.status == SwapStatus.Requested, Cryptomerce__SwapRequestIsConfirmedOrCompletedAlready());
         require(msg.sender == s_productIdToOwner[swapRequest.requestedProductId], Cryptomerce__NotTheProductOwner());
         if (priceDifference > 0) {
+            require(msg.value >= priceDifference, Cryptomerce__NotEnoughValueSent(msg.value, priceDifference));
             payable(offerer).transfer(priceDifference);
         } else if (priceDifference < 0) {
             // you will want to get the price difference from offerer, so swap isn't completed yet

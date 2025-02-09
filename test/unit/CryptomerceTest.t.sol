@@ -153,4 +153,49 @@ contract CryptomerceTest is Test {
 
         //@TODO test emit SwapRequested
     }
+
+    function testCompleteSwapForSingleProductIfPriceDifferentIsZero() public {
+        uint256 swapId;
+        Cryptomerce.SwapRequest memory swapRequest;
+        vm.prank(USER);
+        cryptomerce.addProduct("Product 1", 100);
+        vm.startPrank(USER2);
+        cryptomerce.addProduct("Product 2", 100);
+        vm.stopPrank();
+
+        vm.prank(USER);
+        swapId = cryptomerce.requestSwapForSingleProduct(0, 1);
+        vm.prank(USER2);
+        cryptomerce.completeSwapForSingleProduct(swapId, USER); //@TODO swapId yerine 4 girince ProductOwner hatasi veriyor
+        swapRequest = cryptomerce.getSwapRequestById(swapId, USER);
+
+        assertEq(cryptomerce.s_productIdToOwner(0), USER2);
+        assertEq(cryptomerce.s_productIdToOwner(1), USER);
+
+        //@TODO test emit SwapCompleted
+    }
+
+    function testCompleteSwapForSingleProductIfPriceDifferentIsPositive() public {
+        uint256 swapId;
+        Cryptomerce.SwapRequest memory swapRequest;
+        uint256 previousOffererBalance = USER.balance;
+        uint256 previousOwnerOfRequestedProductBalance = USER2.balance;
+        cryptomerce.addProduct("Product 1", 200);
+        vm.startPrank(USER2);
+        cryptomerce.addProduct("Product 2", 100);
+        vm.stopPrank();
+
+        vm.prank(USER);
+        swapId = cryptomerce.requestSwapForSingleProduct(0, 1);
+        vm.prank(USER2);
+        cryptomerce.completeSwapForSingleProduct{value: 100}(swapId, USER);
+        swapRequest = cryptomerce.getSwapRequestById(swapId, USER);
+
+        assertEq(cryptomerce.s_productIdToOwner(0), USER2);
+        assertEq(cryptomerce.s_productIdToOwner(1), USER);
+        assertEq(address(USER2).balance, previousOwnerOfRequestedProductBalance - 100);
+        assertEq(address(USER).balance, previousOffererBalance + 100);
+
+        //@TODO test emit SwapCompleted
+    }
 }
