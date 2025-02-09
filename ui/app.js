@@ -281,3 +281,25 @@ document.getElementById('addProductForm').addEventListener('submit', async (even
         console.error('Ethereum provider not found. Install MetaMask.');
     }
 });
+
+async function requestSwapForSingleProduct(requesterProductId, requestedProductId) {
+  if (window.ethereum) {
+      const web3 = new Web3(window.ethereum);
+      await window.ethereum.enable();
+
+      const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+      try {
+          const accounts = await web3.eth.getAccounts();
+          await contract.methods.requestSwapForSingleProduct(requesterProductId, requestedProductId).send({ from: accounts[0] });
+          alert('Swap request sent successfully!');
+      } catch (error) {
+          console.error('Error requesting swap:', error);
+      }
+  } else {
+      console.error('Ethereum provider not found. Install MetaMask.');
+  }
+}
+
+
+

@@ -11,3 +11,4 @@
 
 ### TODOs for Testing
 - [X] Test buyProduct
+- [ ] Test swap functionalities

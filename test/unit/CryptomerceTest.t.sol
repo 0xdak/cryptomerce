@@ -123,6 +123,34 @@ contract CryptomerceTest is Test {
         assertEq(address(USER2).balance, previosBalanceOfUser2 - 100);
     }
 
-    // testBuyProduct() + if extra money is sent, it should be returned
-    function testBuyProductWithSendingExtraMoney() public {}
+    function testRequestSwapForSingleProductWithDisabledProduct() public {
+        vm.prank(USER);
+        cryptomerce.addProduct("Product 1", 100);
+        vm.startPrank(USER2);
+        cryptomerce.addProduct("Product 2", 100);
+        cryptomerce.disableProduct(1);
+        vm.stopPrank();
+
+        vm.prank(USER);
+        vm.expectRevert(Cryptomerce.Cryptomerce__ProductNotFound.selector);
+        cryptomerce.requestSwapForSingleProduct(0, 1);
+    }
+
+    function testRequestSwapForSingleProduct() public {
+        uint256 swapId;
+        Cryptomerce.SwapRequest memory swapRequest;
+        vm.prank(USER);
+        cryptomerce.addProduct("Product 1", 100);
+        vm.startPrank(USER2);
+        cryptomerce.addProduct("Product 2", 100);
+        vm.stopPrank();
+
+        vm.prank(USER);
+        swapId = cryptomerce.requestSwapForSingleProduct(0, 1);
+        swapRequest = cryptomerce.getSwapRequestById(swapId, USER);
+        assertEq(swapRequest.offeredProductId, 0);
+        assertEq(swapRequest.requestedProductId, 1);
+
+        //@TODO test emit SwapRequested
+    }
 }

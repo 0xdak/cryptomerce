@@ -90,7 +90,10 @@ contract Cryptomerce {
     /// @param offeredProduct Product id that will be offered
     /// @param requestedProduct Product id that will be requested
     /// @dev This function is for single product swap
-    function requestSwapForSingleProduct(uint256 offeredProduct, uint256 requestedProduct) public {
+    function requestSwapForSingleProduct(uint256 offeredProduct, uint256 requestedProduct)
+        public
+        returns (uint256 swapId)
+    {
         require(s_products[offeredProduct].isActive, Cryptomerce__ProductNotFound());
         require(s_products[requestedProduct].isActive, Cryptomerce__ProductNotFound());
         // mapping(address swapOfferer => mapping(uint256 swapId => SwapRequest swapRequest)) private s_swapOffererToSwapRequests;
@@ -98,6 +101,7 @@ contract Cryptomerce {
             SwapRequest(offeredProduct, requestedProduct, SwapStatus.Requested);
         emit SwapRequested(swapsCounter, offeredProduct, requestedProduct, msg.sender);
         swapsCounter++;
+        return swapId;
     }
 
     /// @notice Confirm the swap for single product
@@ -165,6 +169,11 @@ contract Cryptomerce {
         }
 
         return activeProducts;
+    }
+
+    /// @notice Get swap request by id
+    function getSwapRequestById(uint256 swapId, address offerer) external view returns (SwapRequest memory) {
+        return s_swapOffererToSwapRequests[offerer][swapId];
     }
 
     /// @notice Get product by index, if product is not active, it will throw an error
